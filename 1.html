@@ -1,0 +1,1561 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>吟诵学堂</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=ZCOOL+XiaoWei&family=Long+Cang&display=swap');
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  :root{
+    --paper:#f0e6d2;--paper-light:#f7f0e0;--ink:#2b1d0e;--ink-light:#5a3e1b;
+    --vermilion:#a8261e;--vermilion-deep:#8b1a13;--gold:#a67c00;
+    --border:#7a6440;--shadow:rgba(43,29,14,0.2);--seal-red:#b22222;
+  }
+  body{
+    font-family:'ZCOOL XiaoWei','KaiTi','楷体',serif;
+    background:linear-gradient(180deg,#f0e6d2 0%,#e8dcc0 40%,#dccda8 100%);
+    color:var(--ink);min-height:100vh;line-height:1.8;position:relative;overflow-x:hidden;
+  }
+  body::before{
+    content:'';position:fixed;top:0;left:0;right:0;bottom:0;
+    background-image:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(122,100,64,0.02) 3px,rgba(122,100,64,0.02) 5px),
+    repeating-linear-gradient(90deg,transparent,transparent 7px,rgba(122,100,64,0.015) 7px,rgba(122,100,64,0.015) 9px);
+    pointer-events:none;z-index:0;
+  }
+  .container{max-width:900px;margin:0 auto;position:relative;z-index:1;padding-bottom:80px;}
+
+  /* === 视图切换 === */
+  .view{display:none;padding:0 14px 20px;position:relative;z-index:1;}
+  .view.active{display:block;animation:fadeIn 0.2s;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+
+  /* === 顶栏 === */
+  .topbar{
+    position:sticky;top:0;z-index:100;background:rgba(240,230,210,0.96);backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--border);margin:0 -14px 14px;padding:10px 14px;
+    display:flex;align-items:center;gap:10px;
+  }
+  .topbar .title{
+    font-family:'Ma Shan Zheng','KaiTi',cursive;font-size:18px;color:var(--ink);letter-spacing:2px;flex:1;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  .topbar .back{
+    background:var(--ink);color:var(--paper);border:none;border-radius:2px;padding:7px 12px;
+    font-family:'Ma Shan Zheng',serif;font-size:14px;cursor:pointer;letter-spacing:1px;white-space:nowrap;
+  }
+  .topbar .back:active{background:var(--vermilion-deep);}
+  .topbar .count{font-size:12px;color:var(--ink-light);white-space:nowrap;}
+
+  /* === 首页 Header === */
+  .home-header{
+    text-align:center;padding:28px 16px 20px;margin-bottom:12px;
+    background:linear-gradient(180deg,rgba(247,240,224,0.92),rgba(232,220,192,0.85));
+    border-bottom:1px solid var(--border);
+  }
+  .home-header h1{
+    font-family:'Ma Shan Zheng',cursive;font-size:34px;color:var(--ink);letter-spacing:8px;margin-bottom:4px;
+    text-shadow:1px 1px 0 rgba(168,38,30,0.12);
+  }
+  .home-header .sub{font-size:13px;color:var(--ink-light);letter-spacing:4px;font-family:'Long Cang',cursive;}
+  .home-header .seal{
+    display:inline-block;background:var(--seal-red);color:#fff;padding:3px 10px;font-size:11px;
+    border-radius:1px;margin-top:6px;letter-spacing:3px;font-family:'Ma Shan Zheng',serif;transform:rotate(-2deg);
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,0.2);
+  }
+
+  /* === 搜索 === */
+  .search-wrap{margin-bottom:12px;}
+  .search-wrap input{
+    width:100%;padding:10px 14px;font-size:15px;font-family:inherit;
+    background:rgba(255,252,240,0.7);border:1px solid var(--border);border-radius:2px;
+    color:var(--ink);outline:none;box-shadow:inset 0 1px 3px rgba(122,100,64,0.1);
+  }
+  .search-wrap input:focus{border-color:var(--vermilion);box-shadow:0 0 0 2px rgba(168,38,30,0.1);}
+  .search-wrap input::placeholder{color:var(--ink-light);opacity:0.5;}
+
+  /* === 分类网格 === */
+  .cat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+  .cat-card{
+    background:linear-gradient(145deg,rgba(255,252,240,0.75),rgba(240,230,210,0.85));
+    border:1px solid var(--border);border-radius:2px;padding:12px 6px;cursor:pointer;
+    transition:all 0.2s;position:relative;text-align:center;box-shadow:0 1px 4px var(--shadow);
+  }
+  .cat-card::before{
+    content:'';position:absolute;top:3px;left:3px;right:3px;bottom:3px;
+    border:1px solid rgba(122,100,64,0.18);pointer-events:none;
+  }
+  .cat-card:active{transform:scale(0.95);border-color:var(--vermilion);}
+  .cat-card .cn{font-family:'Ma Shan Zheng',cursive;font-size:16px;color:var(--ink);letter-spacing:1px;margin-bottom:2px;line-height:1.3;}
+  .cat-card .cc{font-size:11px;color:var(--ink-light);}
+  .cat-card .cc .num{color:var(--vermilion);font-weight:bold;}
+  .cat-card.has-video::after{content:'🎬';position:absolute;top:4px;right:5px;font-size:9px;opacity:0.5;}
+  .cat-card.cat-all{background:linear-gradient(135deg,var(--vermilion),var(--vermilion-deep));border-color:var(--vermilion-deep);}
+  .cat-card.cat-all .cn{color:#fff;font-size:17px;}
+  .cat-card.cat-all .cc{color:rgba(255,255,255,0.85);}
+  .cat-card.cat-all .cc .num{color:#ffd700;}
+  .cat-card.cat-all::before{border-color:rgba(255,255,255,0.2);}
+
+  /* === 搜索结果 === */
+  .sr-list{display:flex;flex-direction:column;gap:6px;margin-bottom:10px;}
+  .sr-item{
+    display:flex;justify-content:space-between;align-items:center;padding:10px 14px;
+    background:rgba(255,252,240,0.6);border:1px solid var(--border);border-radius:2px;
+    cursor:pointer;transition:all 0.2s;
+  }
+  .sr-item:active{background:rgba(168,38,30,0.08);border-color:var(--vermilion);}
+  .sr-name{font-family:'Ma Shan Zheng',cursive;font-size:17px;color:var(--ink);}
+  .sr-cat{font-size:11px;color:var(--vermilion);background:rgba(168,38,30,0.08);padding:2px 7px;border-radius:1px;}
+  .no-data{text-align:center;padding:30px 20px;color:var(--ink-light);font-size:14px;}
+
+  /* === 目录页（二级） === */
+  .catalog{display:flex;flex-direction:column;gap:4px;}
+  .cat-item{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:12px 14px;background:rgba(255,252,240,0.5);
+    border:1px solid var(--border);border-radius:2px;cursor:pointer;
+    transition:all 0.15s;position:relative;
+  }
+  .cat-item:active{background:rgba(168,38,30,0.08);border-color:var(--vermilion);transform:translateX(3px);}
+  .cat-item .ci-name{font-family:'Ma Shan Zheng',cursive;font-size:18px;color:var(--ink);letter-spacing:1px;}
+  .cat-item .ci-meta{display:flex;gap:6px;align-items:center;font-size:12px;color:var(--ink-light);}
+  .cat-item .ci-arrow{color:var(--vermilion);font-size:14px;opacity:0.5;}
+  .cat-item .ci-video{font-size:12px;}
+  .cat-item .ci-num{
+    display:inline-block;background:var(--ink);color:var(--paper);
+    font-size:10px;padding:1px 6px;border-radius:1px;margin-left:4px;
+  }
+  .cat-item.hidden{display:none;}
+
+  /* === 分页 === */
+  .pagination{
+    display:flex;justify-content:center;align-items:center;gap:8px;margin-top:16px;padding:10px 0;
+  }
+  .pagination button{
+    background:rgba(255,252,240,0.7);border:1px solid var(--border);border-radius:2px;
+    padding:6px 14px;font-family:inherit;font-size:13px;color:var(--ink);cursor:pointer;
+  }
+  .pagination button:disabled{opacity:0.4;cursor:not-allowed;}
+  .pagination button:not(:disabled):active{background:var(--vermilion);color:#fff;border-color:var(--vermilion);}
+  .pagination .pg-info{font-size:12px;color:var(--ink-light);}
+
+  /* === 诗词详情页（三级） === */
+  .poem-detail{
+    background:linear-gradient(145deg,rgba(255,252,240,0.75),rgba(240,230,210,0.85));
+    border:1px solid var(--border);border-radius:2px;padding:16px;margin-bottom:14px;
+    position:relative;box-shadow:0 1px 6px var(--shadow);
+  }
+  .poem-detail::before{
+    content:'';position:absolute;top:4px;left:4px;right:4px;bottom:4px;
+    border:1px solid rgba(122,100,64,0.2);pointer-events:none;
+  }
+  .poem-detail h2{
+    font-family:'Ma Shan Zheng',cursive;font-size:26px;color:var(--ink);
+    text-align:center;letter-spacing:3px;margin-bottom:12px;text-shadow:1px 1px 0 rgba(168,38,30,0.1);
+  }
+  .poem-detail .meta-row{text-align:center;font-size:12px;color:var(--ink-light);margin-bottom:14px;}
+  .poem-detail .meta-row .dot{margin:0 6px;opacity:0.4;}
+
+  .audio-group{margin-bottom:14px;}
+  .audio-group .ag-label{
+    font-size:13px;color:var(--ink-light);margin-bottom:8px;padding-left:6px;
+    border-left:3px solid var(--vermilion);letter-spacing:2px;
+  }
+  .audio-btns{display:flex;flex-wrap:wrap;gap:6px;}
+  .audio-btn{
+    display:flex;align-items:center;gap:5px;padding:7px 13px;
+    background:linear-gradient(180deg,rgba(255,252,240,0.7),rgba(232,220,192,0.6));
+    border:1px solid var(--border);border-radius:1px;cursor:pointer;
+    font-size:13px;color:var(--ink);user-select:none;transition:all 0.2s;
+  }
+  .audio-btn:active{background:var(--vermilion);color:#fff;border-color:var(--vermilion-deep);}
+  .audio-btn.playing{background:var(--ink);color:var(--paper);border-color:var(--ink);animation:pulse 1.5s infinite;}
+  .audio-btn .btn-state{
+    margin-left:6px;font-size:10px;color:var(--vermilion);opacity:0.7;
+    width:14px;height:14px;display:inline-flex;align-items:center;justify-content:center;
+    background:rgba(168,38,30,0.1);border-radius:1px;
+  }
+  .audio-btn.playing .btn-state{color:#fff;background:rgba(255,255,255,0.2);opacity:1;}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(168,38,30,0.3);}50%{box-shadow:0 0 0 6px rgba(168,38,30,0);}}
+
+  /* === 迷你播放器栏（底部固定） === */
+  .mini-player{
+    position:fixed;bottom:0;left:0;right:0;z-index:9000;
+    display:none;align-items:center;gap:8px;padding:8px 12px;
+    background:rgba(45,35,25,0.96);backdrop-filter:blur(8px);
+    border-top:1px solid rgba(168,38,30,0.4);box-shadow:0 -2px 12px rgba(0,0,0,0.2);
+    color:#f5f0e8;font-size:13px;
+  }
+  .mini-player.show{display:flex;animation:slideUp 0.25s ease;}
+  @keyframes slideUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
+  .mini-player .mp-icon{font-size:18px;flex-shrink:0;}
+  .mini-player .mp-info{flex:1;min-width:0;}
+  .mini-player .mp-title{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .mini-player .mp-sub{font-size:11px;opacity:0.6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .mini-player .mp-progress{flex:2;height:3px;background:rgba(255,255,255,0.15);border-radius:2px;cursor:pointer;position:relative;min-width:60px;}
+  .mini-player .mp-progress-bar{height:100%;background:var(--vermilion);border-radius:2px;width:0%;transition:width 0.3s;}
+  .mini-player .mp-time{font-size:11px;opacity:0.6;flex-shrink:0;min-width:70px;text-align:right;}
+  .mini-player .mp-btns{display:flex;gap:4px;flex-shrink:0;}
+  .mini-player .mp-btn{
+    width:34px;height:34px;display:flex;align-items:center;justify-content:center;
+    border:none;border-radius:50%;background:rgba(255,255,255,0.1);color:#fff;
+    cursor:pointer;font-size:14px;transition:all 0.2s;
+  }
+  .mini-player .mp-btn:active{transform:scale(0.9);background:var(--vermilion);}
+  .mini-player .mp-btn.active{background:var(--vermilion);}
+  .mini-player .mp-btn.mp-play{width:40px;height:40px;background:var(--vermilion);font-size:16px;}
+
+  /* 视频折叠 */
+  .video-collapse{border:1px solid var(--border);border-radius:2px;margin-top:4px;overflow:hidden;}
+  .video-header{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:10px 14px;background:rgba(255,252,240,0.5);cursor:pointer;
+    font-size:14px;color:var(--ink);letter-spacing:1px;
+  }
+  .video-header:active{background:rgba(168,38,30,0.05);}
+  .video-header .vh-title{display:flex;align-items:center;gap:6px;}
+  .video-header .vh-arrow{transition:transform 0.25s;font-size:12px;color:var(--ink-light);}
+  .video-collapse.open .video-header .vh-arrow{transform:rotate(90deg);}
+  .video-body{max-height:0;overflow:hidden;transition:max-height 0.3s ease;}
+  .video-collapse.open .video-body{max-height:500px;}
+  .video-inner{padding:10px;background:rgba(42,42,42,0.1);}
+  .video-wrapper{position:relative;width:100%;aspect-ratio:16/9;background:#2a2a2a;border-radius:1px;overflow:hidden;border:1px solid var(--ink);}
+  .video-player{width:100%;height:100%;display:block;background:#2a2a2a;object-fit:contain;filter:brightness(1.08) contrast(1.05);}
+  .video-overlay{
+    position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+    width:56px;height:56px;background:rgba(168,38,30,0.92);border:2px solid rgba(255,255,255,0.85);
+    border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:22px;cursor:pointer;z-index:3;padding-left:3px;
+  }
+  .video-overlay:hover{background:var(--vermilion);}
+  .video-wrapper.playing .video-overlay{display:none;}
+
+  /* 全屏按钮 */
+  .fs-btn{
+    position:absolute;bottom:8px;right:8px;width:36px;height:36px;
+    background:rgba(0,0,0,0.55);border:1px solid rgba(255,255,255,0.3);border-radius:4px;
+    display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;
+    cursor:pointer;z-index:4;transition:all 0.2s;backdrop-filter:blur(4px);
+  }
+  .fs-btn:active{background:var(--vermilion);transform:scale(0.92);}
+  .fs-btn.exit{background:rgba(168,38,30,0.85);border-color:rgba(255,255,255,0.4);}
+  .fs-tip{
+    position:absolute;bottom:50px;right:8px;background:rgba(0,0,0,0.75);color:#fff;
+    font-size:11px;padding:4px 8px;border-radius:3px;white-space:nowrap;z-index:4;
+    pointer-events:none;opacity:0;transition:opacity 0.2s;
+  }
+  .fs-btn:hover + .fs-tip{opacity:1;}
+
+  /* 横屏按钮 */
+  .ls-btn{
+    position:absolute;bottom:8px;right:52px;width:36px;height:36px;
+    background:rgba(0,0,0,0.55);border:1px solid rgba(255,255,255,0.3);border-radius:4px;
+    display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;
+    cursor:pointer;z-index:4;transition:all 0.2s;backdrop-filter:blur(4px);
+  }
+  .ls-btn:active{background:var(--vermilion);transform:scale(0.92);}
+  .ls-btn.active{background:var(--vermilion);border-color:rgba(255,255,255,0.5);}
+
+  /* 横屏模式 - 模拟横屏旋转90度 */
+  .video-wrapper.is-landscape{
+    position:fixed!important;top:50%!important;left:50%!important;
+    width:100vh!important;height:56.25vw!important;
+    transform:translate(-50%,-50%) rotate(90deg)!important;
+    z-index:9999;border:none;border-radius:0;background:#000;overflow:hidden;
+    box-shadow:0 0 30px rgba(0,0,0,0.5);
+  }
+  .video-wrapper.is-landscape .ls-btn{
+    bottom:12px;right:12px;width:40px;height:40px;font-size:16px;
+    transform:rotate(-90deg);
+  }
+  .video-wrapper.is-landscape .fs-btn{display:none;}
+  .video-wrapper.is-landscape .video-overlay{
+    transform:translate(-50%,-50%) rotate(-90deg);
+  }
+  .video-wrapper.is-landscape .video-player{
+    transform:rotate(-90deg);
+    width:100%;height:100%;
+  }
+
+  /* 全屏状态 */
+  .video-wrapper.is-fullscreen{
+    position:fixed!important;top:0!important;left:0!important;width:100vw!important;height:100vh!important;
+    max-width:100vw!important;max-height:100vh!important;aspect-ratio:auto!important;
+    z-index:9999;border:none;border-radius:0;background:#000;overflow:hidden;
+  }
+  .video-wrapper.is-fullscreen .video-player{width:100%;height:100%;object-fit:contain;}
+  .video-wrapper.is-fullscreen .fs-btn{bottom:16px;right:16px;width:44px;height:44px;font-size:20px;}
+  .video-wrapper.is-fullscreen .fs-btn.exit{display:flex;}
+
+  /* 页脚 */
+  footer{text-align:center;padding:20px 16px;color:var(--ink-light);font-size:11px;border-top:1px solid var(--border);margin-top:20px;}
+  footer .orn{margin:6px 0;letter-spacing:6px;color:var(--vermilion);opacity:0.5;}
+
+  @media (min-width:600px){.cat-grid{grid-template-columns:repeat(4,1fr);}}
+  @media (min-width:900px){.cat-grid{grid-template-columns:repeat(5,1fr);}h1{font-size:44px;}}
+  ::-webkit-scrollbar{width:6px;}
+  ::-webkit-scrollbar-track{background:var(--paper-dark);}
+  ::-webkit-scrollbar-thumb{background:var(--border);border-radius:1px;}
+
+  /* === 登录系统 === */
+  .login-view{
+    position:fixed;top:0;left:0;right:0;bottom:0;z-index:9999;
+    background:linear-gradient(180deg,rgba(240,230,210,0.98),rgba(220,200,170,0.98));
+    display:flex;align-items:center;justify-content:center;padding:20px;
+  }
+  .login-view.hidden{display:none;}
+  .login-box{
+    width:100%;max-width:340px;background:rgba(255,252,240,0.95);
+    border:2px solid var(--border);border-radius:3px;padding:28px 22px;
+    box-shadow:0 8px 30px rgba(43,29,14,0.2);
+  }
+  .login-box::before{
+    content:'';position:absolute;top:6px;left:6px;right:6px;bottom:6px;
+    border:1px solid rgba(122,100,64,0.3);pointer-events:none;
+  }
+  .login-box h2{
+    font-family:'Ma Shan Zheng',cursive;font-size:28px;color:var(--ink);
+    text-align:center;margin-bottom:6px;letter-spacing:4px;
+  }
+  .login-box .login-sub{
+    text-align:center;font-size:12px;color:var(--ink-light);margin-bottom:20px;letter-spacing:2px;
+  }
+  .login-box .login-row{margin-bottom:14px;}
+  .login-box label{
+    display:block;font-size:12px;color:var(--ink-light);margin-bottom:5px;letter-spacing:1px;
+  }
+  .login-box input{
+    width:100%;padding:10px 12px;font-size:14px;font-family:inherit;
+    background:rgba(255,252,240,0.8);border:1px solid var(--border);border-radius:2px;
+    color:var(--ink);outline:none;
+  }
+  .login-box input:focus{border-color:var(--vermilion);box-shadow:0 0 0 2px rgba(168,38,30,0.1);}
+  .login-box .login-btn{
+    width:100%;padding:11px;margin-top:8px;
+    background:linear-gradient(135deg,var(--vermilion),var(--vermilion-deep));
+    border:1px solid var(--vermilion-deep);border-radius:2px;
+    color:#fff;font-size:15px;font-family:'Ma Shan Zheng',cursive;letter-spacing:4px;cursor:pointer;
+    transition:all 0.2s;
+  }
+  .login-box .login-btn:active{transform:scale(0.98);}
+  .login-box .login-error{
+    color:var(--vermilion);font-size:12px;text-align:center;margin-top:10px;min-height:18px;
+  }
+  .login-box .register-link{
+    text-align:center;margin-top:14px;font-size:12px;color:var(--ink-light);
+  }
+  .login-box .register-link a{color:var(--vermilion);cursor:pointer;text-decoration:none;}
+
+  /* 顶部用户栏 */
+  .user-bar{
+    display:flex;align-items:center;gap:8px;margin-left:auto;
+    font-size:12px;color:var(--ink-light);
+  }
+  .user-bar .user-name{
+    font-family:'Ma Shan Zheng',cursive;font-size:14px;color:var(--ink);
+  }
+  .user-bar .user-role{
+    padding:2px 8px;border-radius:1px;font-size:11px;
+    background:rgba(168,38,30,0.1);color:var(--vermilion);
+  }
+  .user-bar .user-role.admin{background:rgba(166,124,0,0.15);color:var(--gold);}
+  .user-bar .logout-btn{
+    background:none;border:1px solid var(--border);border-radius:2px;
+    padding:3px 8px;font-size:11px;color:var(--ink-light);cursor:pointer;
+  }
+  .user-bar .logout-btn:active{background:var(--vermilion);color:#fff;}
+
+  /* 权限标记 */
+  .cat-card.restricted::before{
+    content:'';position:absolute;top:3px;left:3px;right:3px;bottom:3px;
+    border:1px dashed rgba(168,38,30,0.4);pointer-events:none;
+  }
+  .cat-card .lock-icon{
+    position:absolute;top:6px;left:6px;font-size:10px;opacity:0.6;
+  }
+
+  /* 注册表单 */
+  .reg-link{
+    text-align:center;margin-top:12px;font-size:12px;color:var(--ink-light);
+  }
+  .reg-link a{color:var(--vermilion);cursor:pointer;}
+
+  /* 解锁栏 */
+  .unlock-bar{
+    display:flex;gap:8px;padding:8px 12px;margin-bottom:4px;
+    background:rgba(168,38,30,0.06);border:1px dashed rgba(168,38,30,0.2);border-radius:3px;
+  }
+  .unlock-bar input{
+    flex:1;padding:8px 10px;font-size:13px;font-family:inherit;
+    background:rgba(255,252,240,0.8);border:1px solid var(--border);border-radius:2px;
+    color:var(--ink);outline:none;
+  }
+  .unlock-bar input:focus{border-color:var(--vermilion);}
+  .unlock-bar button{
+    padding:8px 16px;background:linear-gradient(135deg,var(--vermilion),var(--vermilion-deep));
+    border:1px solid var(--vermilion-deep);border-radius:2px;color:#fff;font-size:13px;
+    font-family:'Ma Shan Zheng',cursive;letter-spacing:2px;cursor:pointer;white-space:nowrap;
+  }
+  .unlock-bar button:active{transform:scale(0.96);}
+
+  /* 邀请码面板已移除，改用设置弹窗 */
+
+  /* 设置弹窗（管理员） */
+  .settings-modal{
+    display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:10000;
+    background:rgba(0,0,0,0.5);align-items:center;justify-content:center;
+  }
+  .settings-modal.show{display:flex;}
+  .settings-box{
+    width:90%;max-width:380px;max-height:80vh;overflow-y:auto;
+    background:rgba(255,252,240,0.98);border:2px solid var(--border);border-radius:3px;
+    box-shadow:0 8px 30px rgba(43,29,14,0.3);
+  }
+  .settings-header{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:14px 16px;border-bottom:1px solid var(--border);
+  }
+  .settings-header h3{
+    font-family:'Ma Shan Zheng',cursive;font-size:18px;color:var(--ink);letter-spacing:2px;
+  }
+  .settings-close{
+    width:30px;height:30px;background:none;border:1px solid var(--border);border-radius:2px;
+    font-size:16px;color:var(--ink-light);cursor:pointer;
+  }
+  .settings-close:active{background:var(--vermilion);color:#fff;}
+  .settings-body{padding:12px 16px;}
+  .settings-body .code-row{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:8px 0;border-bottom:1px dotted rgba(122,100,64,0.2);font-size:13px;
+  }
+  .settings-body .code-row:last-child{border-bottom:none;}
+  .settings-body .code-cat{color:var(--ink);}
+  .settings-body .code-val{
+    font-family:monospace;color:var(--vermilion);font-weight:bold;
+    padding:3px 10px;background:rgba(168,38,30,0.08);border-radius:1px;
+  }
+
+  /* 管理员设置按钮 */
+  .settings-btn{
+    width:32px;height:32px;background:none;border:1px solid var(--border);border-radius:2px;
+    font-size:16px;color:var(--ink-light);cursor:pointer;display:flex;align-items:center;justify-content:center;
+  }
+  .settings-btn:active{background:var(--vermilion);color:#fff;}
+
+/* ===== 下载按钮样式 ===== */
+.download-bar{display:flex;gap:10px;justify-content:center;margin:12px 0;flex-wrap:wrap;}
+.dl-btn{background:linear-gradient(135deg,#8B4513,#A0522D);color:#fff;border:none;padding:10px 20px;border-radius:4px;font-size:14px;cursor:pointer;letter-spacing:1px;transition:all 0.3s;font-family:inherit;}
+.dl-btn:hover{background:linear-gradient(135deg,#A0522D,#CD853F);transform:translateY(-1px);box-shadow:0 2px 8px rgba(0,0,0,0.2);}
+.dl-btn:disabled{background:#999;cursor:not-allowed;transform:none;box-shadow:none;}
+.dl-btn.primary{background:linear-gradient(135deg,#B8860B,#DAA520);}
+.dl-btn.danger{background:linear-gradient(135deg,#8B0000,#B22222);}
+.dl-count{font-size:13px;color:var(--ink-light);text-align:center;margin:4px 0;}
+
+/* 目录页多选 */
+.cat-item.selectable{cursor:pointer;}
+.cat-item .cat-checkbox{display:none;width:18px;height:18px;margin-right:8px;accent-color:#8B4513;cursor:pointer;}
+.cat-item.selectable .cat-checkbox{display:inline-block;}
+.select-bar{display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--card);border-radius:4px;margin:8px 0;border:1px solid var(--border);}
+.select-bar label{font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px;}
+.select-bar input[type=checkbox]{accent-color:#8B4513;width:16px;height:16px;}
+.select-bar .selected-info{font-size:13px;color:var(--ink-light);flex:1;text-align:right;}
+
+/* 下载弹窗 */
+.dl-modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:1000;display:flex;align-items:center;justify-content:center;}
+.dl-modal{background:var(--bg);border:2px solid var(--border);border-radius:6px;padding:24px;max-width:420px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,0.3);}
+.dl-modal h3{margin:0 0 12px 0;font-size:18px;color:var(--ink);}
+.dl-modal .dl-options{display:flex;flex-direction:column;gap:10px;margin-bottom:16px;}
+.dl-modal .dl-options label{display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer;}
+.dl-modal .dl-options input[type=checkbox]{accent-color:#8B4513;width:16px;height:16px;}
+.dl-modal textarea{width:100%;min-height:120px;border:1px solid var(--border);border-radius:4px;padding:8px;font-family:inherit;font-size:13px;resize:vertical;background:var(--card);color:var(--ink);}
+.dl-modal .dl-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:16px;}
+
+/* 权限提示 */
+.dl-permission-warn{background:var(--warn-bg,rgba(255,200,100,0.1));border:1px solid var(--warn-color,#DAA520);border-radius:4px;padding:8px 12px;margin:8px 0;font-size:13px;color:var(--ink);}
+.dl-section{margin:8px 0;padding:8px 0;border-top:1px dashed var(--border);}
+.dl-section-label{font-size:12px;color:var(--ink-light);letter-spacing:1px;margin-bottom:6px;display:block;}
+.dl-btn-row{display:flex;gap:6px;flex-wrap:wrap;}
+.dl-btn-row .dl-btn{padding:6px 14px;font-size:12px;}
+
+</style>
+</head>
+<body>
+
+<!-- ========== 登录页面 ========== -->
+<div class="login-view" id="loginView">
+  <div class="login-box">
+    <h2>吟诵学堂</h2>
+    <div class="login-sub">邀 请 码 进 入</div>
+    <div class="login-row">
+      <label>请输入邀请码</label>
+      <input type="text" id="inviteCode" placeholder="输入邀请码" autocomplete="off">
+    </div>
+    <button class="login-btn" onclick="doLogin()">进 入</button>
+    <div class="login-error" id="loginError"></div>
+  </div>
+</div>
+
+<!-- ========== 管理员设置弹窗 ========== -->
+<div class="settings-modal" id="settingsModal">
+  <div class="settings-box">
+    <div class="settings-header">
+      <h3>📋 邀请码管理</h3>
+      <button class="settings-close" onclick="closeSettings()">✕</button>
+    </div>
+    <div class="settings-body" id="settingsBody"></div>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ========== 一级：首页 ========== -->
+<div class="view active" id="view-home">
+  <div class="home-header">
+    <div class="user-bar" id="homeUserBar" style="margin-bottom:6px;"></div>
+    <h1>吟诵学堂</h1>
+    <div class="sub">古 诗 文 吟 诵 · 示 范 微 课</div>
+    <div class="seal">珍藏典藏</div>
+  </div>
+  <!-- 普通用户：解锁栏 -->
+  <div class="unlock-bar" id="unlockBar" style="display:none;">
+    <input type="text" id="unlockInput" placeholder="输入邀请码，解锁更多分类" autocomplete="off">
+    <button onclick="doUnlock()">解锁</button>
+  </div>
+  <div class="search-wrap">
+    <input type="text" id="homeSearch" placeholder="🔍 搜索诗词名、分类、年级...">
+  </div>
+  <div class="sr-list" id="homeResults" style="display:none;"></div>
+  <div class="cat-grid" id="catGrid"></div>
+  <div id="gridFooter" style="display:none;text-align:center;padding:14px 10px;color:var(--ink-light);font-size:12px;"></div>
+</div>
+
+<!-- ========== 二级：目录列表 ========== -->
+<div class="view" id="view-catalog">
+  <div class="topbar">
+    <button class="back" onclick="goHome()">← 首页</button>
+    <div class="title" id="catTitle"></div>
+    <div class="count" id="catCount"></div>
+    <div class="user-bar" id="catalogUserBar"></div>
+  </div>
+  <div class="search-wrap">
+    <input type="text" id="catSearch" placeholder="🔍 在此页搜索诗词名...">
+  </div>
+  <div class="select-bar" id="selectBar" style="display:none;">
+    <label><input type="checkbox" id="selectAll" onchange="toggleSelectAll(this.checked)"> 全选本页</label>
+    <span class="selected-info" id="selectedInfo">已选 0 首</span>
+    <button class="dl-btn primary" onclick="batchDownload()">⬇ 批量下载</button>
+    <button class="dl-btn" onclick="clearSelection()">清空选择</button>
+  </div>
+  <div class="catalog" id="catalogList"></div>
+  <div class="pagination" id="catPagination"></div>
+</div>
+
+<!-- ========== 三级：诗词详情 ========== -->
+<div class="view" id="view-detail">
+  <div class="topbar">
+    <button class="back" onclick="backToCatalog()">← 返回</button>
+    <div class="title" id="detailTitle"></div>
+    <div class="count" id="detailMeta"></div>
+  </div>
+  <div id="detailContent"></div>
+  <div class="download-bar" id="detailDownloadBar" style="display:none;"></div>
+</div>
+
+<footer>
+  <div class="orn">❦ ❦ ❦</div>
+  吟诵学堂 · 古诗文吟诵与示范微课典藏
+  <div style="margin-top:4px;">共 414 首 · 音频 2898 条 · 视频 137 条</div>
+</footer>
+
+</div>
+
+<audio id="audioPlayer"></audio>
+
+<!-- 迷你播放器栏 -->
+<div class="mini-player" id="miniPlayer">
+  <span class="mp-icon">🎧</span>
+  <div class="mp-info">
+    <div class="mp-title" id="mpTitle">—</div>
+    <div class="mp-sub" id="mpSub">—</div>
+  </div>
+  <div class="mp-progress" id="mpProgress" onclick="seekAudio(event)">
+    <div class="mp-progress-bar" id="mpProgressBar"></div>
+  </div>
+  <span class="mp-time" id="mpTime">0:00 / 0:00</span>
+  <div class="mp-btns">
+    <button class="mp-btn" id="mpLoopBtn" onclick="toggleLoop()" title="循环播放">🔁</button>
+    <button class="mp-btn mp-play" id="mpPlayBtn" onclick="togglePlayPause()" title="播放/暂停">⏸</button>
+    <button class="mp-btn" onclick="stopAudio()" title="停止">✕</button>
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script>
+// poemData loaded from data.js
+
+const catInfo = [{"cat": "一年级", "count": 18, "hasVideo": true}, {"cat": "二年级", "count": 22, "hasVideo": true}, {"cat": "三年级", "count": 25, "hasVideo": true}, {"cat": "四年级", "count": 33, "hasVideo": true}, {"cat": "五年级", "count": 34, "hasVideo": true}, {"cat": "六年级", "count": 40, "hasVideo": true}, {"cat": "七年级", "count": 51, "hasVideo": true}, {"cat": "八年级", "count": 58, "hasVideo": true}, {"cat": "九年级", "count": 47, "hasVideo": true}, {"cat": "文言文选择性必修（10篇）", "count": 15, "hasVideo": true}, {"cat": "高中文言文必修（10篇）", "count": 11, "hasVideo": true}, {"cat": "高中文言文选修（12篇）", "count": 19, "hasVideo": true}, {"cat": "高中诗词曲（40首）", "count": 41, "hasVideo": true}];
+
+const AUDIO_ICONS = {'读诵':'📖','乐吟':'🎵','伴奏':'🎹','基础清吟':'🎻','度曲清吟':'🎻','传统吟咏':'🎶'};
+function getAudioIcon(name){ return AUDIO_ICONS[name] || '🔊'; }
+
+const player = document.getElementById('audioPlayer');
+let currentPlaying = null;
+let lastCatalog = {cat:'', page:0, pageSize:20, query:''};
+
+/* ===== 音频播放（支持后台循环播放） ===== */
+let currentAudioUrl = '';
+let isLooping = false;
+let currentAudioMeta = {title:'', sub:''};
+
+function playAudio(el, url){
+  // 如果点击的是当前播放的按钮，切换暂停/继续
+  if (currentPlaying && currentPlaying === el) {
+    togglePlayPause();
+    return;
+  }
+  // 断掉之前的音频
+  if (currentPlaying) {
+    currentPlaying.classList.remove('playing');
+    const prevState = currentPlaying.querySelector('.btn-state');
+    if (prevState) prevState.textContent = '▶';
+  }
+  // 断掉所有视频
+  document.querySelectorAll('.video-player').forEach(v => {if (!v.paused) v.pause();});
+  // 播放新音频
+  player.pause();
+  player.src = url;
+  player.loop = isLooping;
+  player.play();
+  el.classList.add('playing');
+  el.querySelector('.btn-state').textContent = '⏸';
+  currentPlaying = el;
+  currentAudioUrl = url;
+
+  // 更新迷你播放器
+  const audioName = el.querySelectorAll('span')[1] ? el.querySelectorAll('span')[1].textContent : '';
+  const poemTitle = document.getElementById('detailTitle') ? document.getElementById('detailTitle').textContent : '';
+  currentAudioMeta = {title: poemTitle || audioName, sub: audioName};
+  updateMiniPlayer(true);
+  setupMediaSession(poemTitle, audioName);
+}
+
+/* 迷你播放器控制 */
+function updateMiniPlayer(playing){
+  const mp = document.getElementById('miniPlayer');
+  if (!currentAudioUrl) {mp.classList.remove('show');return;}
+  mp.classList.add('show');
+  document.getElementById('mpTitle').textContent = currentAudioMeta.title || '未知';
+  document.getElementById('mpSub').textContent = currentAudioMeta.sub || '';
+  document.getElementById('mpPlayBtn').textContent = playing ? '⏸' : '▶';
+  document.getElementById('mpLoopBtn').classList.toggle('active', isLooping);
+}
+
+function togglePlayPause(){
+  if (!currentAudioUrl) return;
+  if (player.paused) {
+    player.play();
+    if (currentPlaying) {currentPlaying.classList.add('playing');currentPlaying.querySelector('.btn-state').textContent = '⏸';}
+    document.getElementById('mpPlayBtn').textContent = '⏸';
+  } else {
+    player.pause();
+    if (currentPlaying) {currentPlaying.classList.remove('playing');currentPlaying.querySelector('.btn-state').textContent = '▶';}
+    document.getElementById('mpPlayBtn').textContent = '▶';
+  }
+}
+
+function toggleLoop(){
+  isLooping = !isLooping;
+  player.loop = isLooping;
+  document.getElementById('mpLoopBtn').classList.toggle('active', isLooping);
+}
+
+function stopAudio(){
+  player.pause();
+  player.currentTime = 0;
+  player.src = '';
+  if (currentPlaying) {
+    currentPlaying.classList.remove('playing');
+    const state = currentPlaying.querySelector('.btn-state');
+    if (state) state.textContent = '▶';
+    currentPlaying = null;
+  }
+  currentAudioUrl = '';
+  document.getElementById('miniPlayer').classList.remove('show');
+  if ('mediaSession' in navigator) {
+    navigator.mediaSession.metadata = null;
+    navigator.mediaSession.playbackState = 'none';
+  }
+}
+
+function seekAudio(e){
+  if (!player.duration) return;
+  const bar = document.getElementById('mpProgress');
+  const rect = bar.getBoundingClientRect();
+  const pct = (e.clientX - rect.left) / rect.width;
+  player.currentTime = pct * player.duration;
+}
+
+function fmtTime(s){
+  if (!s || isNaN(s)) return '0:00';
+  const m = Math.floor(s / 60);
+  const sec = Math.floor(s % 60);
+  return m + ':' + (sec < 10 ? '0' : '') + sec;
+}
+
+/* Media Session API — 后台/锁屏控制 */
+function setupMediaSession(title, sub){
+  if (!('mediaSession' in navigator)) return;
+  navigator.mediaSession.metadata = new MediaMetadata({
+    title: title || '吟诵',
+    artist: sub || '吟诵学堂',
+    album: '吟诵学堂',
+  });
+  navigator.mediaSession.setActionHandler('play', () => {player.play();});
+  navigator.mediaSession.setActionHandler('pause', () => {player.pause();});
+  navigator.mediaSession.setActionHandler('stop', () => {stopAudio();});
+  navigator.mediaSession.setActionHandler('seekbackward', (d) => {player.currentTime = Math.max(0, player.currentTime - (d.seekOffset || 10));});
+  navigator.mediaSession.setActionHandler('seekforward', (d) => {player.currentTime = Math.min(player.duration, player.currentTime + (d.seekOffset || 10));});
+}
+
+/* 播放进度更新 */
+player.addEventListener('timeupdate', () => {
+  if (!currentAudioUrl) return;
+  const pct = player.duration ? (player.currentTime / player.duration * 100) : 0;
+  const bar = document.getElementById('mpProgressBar');
+  if (bar) bar.style.width = pct + '%';
+  const time = document.getElementById('mpTime');
+  if (time) time.textContent = fmtTime(player.currentTime) + ' / ' + fmtTime(player.duration);
+});
+
+player.addEventListener('ended', () => {
+  if (!isLooping) {
+    if (currentPlaying) {
+      currentPlaying.classList.remove('playing');
+      const state = currentPlaying.querySelector('.btn-state');
+      if (state) state.textContent = '▶';
+      currentPlaying = null;
+    }
+    currentAudioUrl = '';
+    document.getElementById('miniPlayer').classList.remove('show');
+  }
+});
+
+player.addEventListener('play', () => {
+  document.querySelectorAll('.video-player').forEach(v => {if (!v.paused) v.pause();});
+  if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
+  document.getElementById('mpPlayBtn').textContent = '⏸';
+});
+
+player.addEventListener('pause', () => {
+  if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
+  document.getElementById('mpPlayBtn').textContent = '▶';
+});
+
+/* ===== 视频控制 ===== */
+function initVideoPlayers(){
+  document.querySelectorAll('.video-player').forEach(video => {
+    const wrapper = video.closest('.video-wrapper');
+    const overlay = wrapper ? wrapper.querySelector('.video-overlay') : null;
+    video.addEventListener('play', () => {
+      // 断掉所有音频
+      player.pause();
+      if (currentPlaying) {
+        currentPlaying.classList.remove('playing');
+        const state = currentPlaying.querySelector('.btn-state');
+        if (state) state.textContent = '▶';
+        currentPlaying = null;
+      }
+      // 断掉其他视频
+      document.querySelectorAll('.video-player').forEach(v => {if (v !== video && !v.paused) v.pause();});
+      if (wrapper) wrapper.classList.add('playing');
+    });
+    video.addEventListener('pause', () => {if (wrapper) wrapper.classList.remove('playing');});
+    if (overlay) overlay.addEventListener('click', () => video.play());
+  });
+}
+
+/* ===== 视图切换 ===== */
+function showView(id){
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+/* ===== 首页：渲染分类网格 ===== */
+function renderCatGrid(){
+  const grid = document.getElementById('catGrid');
+  const visible = catInfo.filter(c => hasPermission(c.cat));
+  if (visible.length === 0) {
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:30px;color:var(--ink-light);font-size:13px;">请输入邀请码解锁分类</div>';
+    return;
+  }
+  grid.innerHTML = visible.map(c => {
+    const cls = c.hasVideo ? 'cat-card has-video' : 'cat-card';
+    return `<div class="${cls}" onclick="openCatalog('${c.cat}', 0)">
+      <div class="cn">${c.cat}</div>
+      <div class="cc"><span class="num">${c.count}</span> 首</div>
+    </div>`;
+  }).join('');
+}
+
+/* ===== 首页：搜索 ===== */
+document.getElementById('homeSearch').addEventListener('input', function(){
+  const q = this.value.trim().toLowerCase();
+  const results = document.getElementById('homeResults');
+  const grid = document.getElementById('catGrid');
+  const footer = document.getElementById('gridFooter');
+  if (!q) {results.style.display='none';results.innerHTML='';grid.style.display='';footer.style.display='none';return;}
+  grid.style.display='none';
+  const all = [];
+  for (const cat in poemData) {if(!hasPermission(cat)) continue;for (const p of poemData[cat]) {all.push({...p, cat});}}
+  const matched = all.filter(p => p.poem.toLowerCase().includes(q) || p.cat.toLowerCase().includes(q));
+  results.style.display='flex';
+  if (matched.length === 0) {results.innerHTML='<div class="no-data">没有找到匹配的诗词</div>';footer.style.display='none';return;}
+  results.innerHTML = matched.slice(0,50).map(p => {
+    const v = p.videos.length>0 ? ' 🎬' : '';
+    const shortC = p.cat.replace(/（/g,'(').replace(/）/g,')');
+    return `<div class="sr-item" onclick="openDetail('${p.cat}','${p.poem.replace(/'/g,"\\'")}')">
+      <span class="sr-name">${p.poem}${v}</span><span class="sr-cat">${shortC}</span></div>`;
+  }).join('');
+  if (matched.length > 50) {footer.style.display='block';footer.textContent=`共 ${matched.length} 条，仅显示前50条`;}
+  else {footer.style.display='none';}
+});
+
+/* ===== 打开目录页（二级） ===== */
+function openCatalog(cat, page){
+  if(cat !== '__all__' && !hasPermission(cat)){alert('请先解锁该分类');return;}
+  lastCatalog = {cat, page, pageSize:20, query:''};
+  document.getElementById('catSearch').value = '';
+  const poems = getCatalogPoems(cat);
+  document.getElementById('catTitle').textContent = cat === '__all__' ? '全部诗词' : cat;
+  document.getElementById('catCount').textContent = poems.length + ' 首';
+  renderCatalogList();
+  showView('view-catalog');
+}
+
+function getCatalogPoems(cat){
+  if (cat === '__all__') {
+    const all = [];
+    for (const c in poemData) {if(!hasPermission(c)) continue;for (const p of poemData[c]) {all.push({...p, cat:c});}}
+    return all;
+  }
+  return (poemData[cat] || []).map(p => ({...p, cat}));
+}
+
+function renderCatalogList(){
+  // 更新选择栏
+  if (lastCatalog.cat !== '__all__' && lastCatalog.cat !== '') {
+    const canSelect = typeof hasPermission === 'function' ? hasPermission(lastCatalog.cat) : true;
+    const bar = document.getElementById('selectBar');
+    if (bar) {
+      if (canSelect) {
+        bar.style.display = 'flex';
+        const count = Object.keys(window.__selectedItems || {}).length;
+        document.getElementById('selectedInfo').textContent = `已选 ${count} 首`;
+      } else {
+        bar.style.display = 'none';
+      }
+    }
+  } else {
+    const bar = document.getElementById('selectBar');
+    if (bar) bar.style.display = 'none';
+  }
+  
+  const poems = getCatalogPoems(lastCatalog.cat);
+  const q = lastCatalog.query.toLowerCase();
+  const filtered = q ? poems.filter(p => p.poem.toLowerCase().includes(q)) : poems;
+  const total = filtered.length;
+  const pages = Math.max(1, Math.ceil(total / lastCatalog.pageSize));
+  if (lastCatalog.page >= pages) lastCatalog.page = 0;
+  const start = lastCatalog.page * lastCatalog.pageSize;
+  const pageItems = filtered.slice(start, start + lastCatalog.pageSize);
+
+  const list = document.getElementById('catalogList');
+  if (pageItems.length === 0) {
+    list.innerHTML = '<div class="no-data">没有找到匹配的诗词</div>';
+  } else {
+    list.innerHTML = pageItems.map(p => {
+      const v = p.videos.length>0 ? '<span class="ci-video">🎬</span>' : '';
+      const shortC = p.cat ? p.cat.replace(/（/g,'(').replace(/）/g,')') : '';
+      const catTag = lastCatalog.cat === '__all__' ? `<span class="ci-name" style="font-size:14px;">${p.poem}</span>` : `<span class="ci-name">${p.poem}</span>`;
+      return `<div class="cat-item" onclick="openDetail('${p.cat}','${p.poem.replace(/'/g,"\\'")}')">
+        ${lastCatalog.cat === '__all__' ? `<div style="display:flex;flex-direction:column;gap:2px;"><span class="ci-name">${p.poem}</span><span style="font-size:11px;color:var(--ink-light);">${shortC}</span></div>` : `<span class="ci-name">${p.poem}</span>`}
+        <div class="ci-meta">${v}<span class="ci-arrow">›</span></div>
+      </div>`;
+    }).join('');
+  }
+
+  // 分页
+  const pg = document.getElementById('catPagination');
+  if (pages <= 1) {
+    pg.innerHTML = `<span class="pg-info">共 ${total} 首</span>`;
+  } else {
+    pg.innerHTML = `
+      <button onclick="changePage(${lastCatalog.page - 1})" ${lastCatalog.page === 0 ? 'disabled' : ''}>← 上一页</button>
+      <span class="pg-info">第 ${lastCatalog.page + 1}/${pages} 页 · ${total} 首</span>
+      <button onclick="changePage(${lastCatalog.page + 1})" ${lastCatalog.page >= pages - 1 ? 'disabled' : ''}>下一页 →</button>
+    `;
+  }
+}
+
+function changePage(p){
+  lastCatalog.page = p;
+  renderCatalogList();
+  window.scrollTo(0, 0);
+}
+
+/* ===== 目录页搜索 ===== */
+document.getElementById('catSearch').addEventListener('input', function(){
+  lastCatalog.query = this.value.trim();
+  lastCatalog.page = 0;
+  renderCatalogList();
+});
+
+/* ===== 打开详情页（三级） ===== */
+function openDetail(cat, poemName){
+  if(!hasPermission(cat)){alert('请先解锁该分类');return;}
+  const poem = (poemData[cat] || []).find(p => p.poem === poemName);
+  if (!poem) return;
+  const shortC = cat.replace(/（/g,'(').replace(/）/g,')');
+  document.getElementById('detailTitle').textContent = poemName;
+  document.getElementById('detailMeta').textContent = shortC;
+
+  const audioHtml = poem.audios.length > 0 ? `
+    <div class="audio-group">
+      <div class="ag-label">🎧 吟诵音频</div>
+      <div class="audio-btns">
+        ${poem.audios.map(a => `<div class="audio-btn" onclick="playAudio(this,'${a.url}')"><span>${getAudioIcon(a.name)}</span><span>${a.name}</span><span class="btn-state">▶</span></div>`).join('')}
+      </div>
+    </div>` : '';
+
+  const videoHtml = poem.videos.length > 0 ? `
+    <div class="video-collapse">
+      <div class="video-header" onclick="toggleVideo(this)">
+        <div class="vh-title">🎬 示范微课</div>
+        <div class="vh-arrow">▶</div>
+      </div>
+      <div class="video-body">
+        <div class="video-inner">
+          <div class="video-wrapper">
+            <video class="video-player" controls preload="none" playsinline webkit-playsinline x5-playsinline x5-video-player-type="h5" x5-video-player-fullscreen="false">
+              <source src="${poem.videos[0].url}" type="video/mp4">
+            </video>
+            <div class="video-overlay">▶</div>
+            <div class="ls-btn" onclick="toggleLandscape(this)" title="横屏播放">⇋</div>
+            <div class="fs-btn" onclick="toggleFullscreen(this)" title="全屏">⛶</div>
+          </div>
+        </div>
+      </div>
+    </div>` : '';
+
+  // 诗词正文、作者、朝代信息
+  const poemAuthor = poem.author || '';
+  const poemDynasty = poem.dynasty || '';
+  const poemContent = poem.content || '';
+  const metaHtml = (poemDynasty || poemAuthor) ? `
+    <div class="poem-meta" style="text-align:center; font-size:14px; color:var(--ink-light); margin-bottom:16px; letter-spacing:1px;">
+      ${poemDynasty ? `<span class="pm-dy">${poemDynasty}</span>` : ''}${poemDynasty && poemAuthor ? '<span style="margin:0 6px;opacity:0.3;">·</span>' : ''}${poemAuthor ? `<span class="pm-au">${poemAuthor}</span>` : ''}
+    </div>` : '';
+  const contentHtml = poemContent ? `
+    <div class="poem-content" style="font-family:'Ma Shan Zheng',cursive; font-size:20px; line-height:2.4; text-align:center; padding:20px 14px; letter-spacing:2px; color:var(--ink); border-top:1px dashed var(--border); border-bottom:1px dashed var(--border); margin-bottom:16px; background:rgba(255,252,240,0.4); border-radius:1px;">
+      ${poemContent.split(/\r?\n/).map(line => line.trim() ? `<div style="margin:4px 0;">${line}</div>` : '').join('')}
+    </div>` : '';
+
+  document.getElementById('detailContent').innerHTML = `
+    <div class="poem-detail">
+      <h2>${poemName}</h2>
+      <div class="meta-row">${shortC}${poem.audios.length ? ' ·  '+poem.audios.length+'条音频' : ''}${poem.videos.length ? ' ·  '+poem.videos.length+'个微课' : ''}</div>
+      ${metaHtml}
+      ${contentHtml}
+      ${audioHtml}
+      ${videoHtml}
+      ${(!poem.audios.length && !poem.videos.length && !poemContent) ? '<div class="no-data">暂无资源</div>' : ''}
+    </div>
+  `;
+  initVideoPlayers();
+  showView('view-detail');
+  renderDetailDownloadBar(cat, poemName);
+}
+
+
+/* ===== 下载功能 ===== */
+window.__selectedItems = {};
+
+function renderDetailDownloadBar(cat, poemName){
+  const bar = document.getElementById('detailDownloadBar');
+  if (!bar) return;
+  const poem = (poemData[cat] || []).find(p => p.poem === poemName);
+  if (!poem) { bar.style.display = 'none'; return; }
+
+  const hasPerm = typeof hasPermission === 'function' ? hasPermission(cat) : true;
+
+  let permissionWarn = '';
+  if (!hasPerm) {
+    permissionWarn = '<div class="dl-permission-warn">⚠️ 您尚未解锁此分类，下载内容可能不完整</div>';
+  }
+
+  // 音频下载按钮
+  let audioDlHtml = '';
+  if (poem.audios && poem.audios.length > 0) {
+    audioDlHtml = '<div class="dl-section"><span class="dl-section-label">🎧 音频下载</span><div class="dl-btn-row">';
+    poem.audios.forEach(a => {
+      const safeName = (poemName + '-' + a.name).replace(/[<>:"/\\|?*]/g, '_');
+      audioDlHtml += `<button class="dl-btn dl-media" data-url="${a.url}" data-name="${safeName}.mp3">⬇ ${a.name}</button>`;
+    });
+    audioDlHtml += '</div></div>';
+  }
+
+  // 视频下载按钮
+  let videoDlHtml = '';
+  if (poem.videos && poem.videos.length > 0) {
+    videoDlHtml = '<div class="dl-section"><span class="dl-section-label">🎬 视频下载</span><div class="dl-btn-row">';
+    poem.videos.forEach(v => {
+      const safeName = (poemName + '-视频').replace(/[<>:"/\\|?*]/g, '_');
+      videoDlHtml += `<button class="dl-btn dl-media" data-url="${v.url}" data-name="${safeName}.mp4">⬇ 视频</button>`;
+    });
+    videoDlHtml += '</div></div>';
+  }
+
+  const encCat = encodeURIComponent(cat);
+  const encName = encodeURIComponent(poemName);
+
+  bar.innerHTML = `
+    ${permissionWarn}
+    <div class="download-bar">
+      <button class="dl-btn primary" onclick="downloadSingle(decodeURIComponent('${encCat}'), decodeURIComponent('${encName}'), 'txt')">📄 下载为 TXT</button>
+      <button class="dl-btn" onclick="downloadSingle(decodeURIComponent('${encCat}'), decodeURIComponent('${encName}'), 'md')">📝 下载为 Markdown</button>
+      <button class="dl-btn" onclick="downloadSingle(decodeURIComponent('${encCat}'), decodeURIComponent('${encName}'), 'json')">💾 下载为 JSON</button>
+    </div>
+    ${audioDlHtml}
+    ${videoDlHtml}
+  `;
+  bar.style.display = 'block';
+
+  // 绑定媒体下载按钮事件
+  bar.querySelectorAll('.dl-media').forEach(btn => {
+    btn.addEventListener('click', function(){
+      downloadMediaFile(this.getAttribute('data-url'), this.getAttribute('data-name'), this);
+    });
+  });
+}
+
+/* 下载媒体文件（音频/视频）— fetch+Blob 优先，跨域时回退到新标签打开 */
+async function downloadMediaFile(url, filename, btn){
+  if (btn) {btn.disabled = true;btn.textContent = '⏳ 下载中...';}
+  try {
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const blob = await resp.blob();
+    const a = document.createElement('a');
+    const objUrl = URL.createObjectURL(blob);
+    a.href = objUrl;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(objUrl), 2000);
+    if (btn) {btn.disabled = false;btn.textContent = '✅ 已下载';setTimeout(()=>{btn.textContent = btn.textContent.replace('✅ 已下载','⬇ '+btn.getAttribute('data-name').split('-').pop().replace('.mp3','').replace('.mp4',''));}, 2000);}
+  } catch(e) {
+    // 跨域被阻止，回退到新标签打开
+    window.open(url, '_blank');
+    if (btn) {btn.disabled = false;btn.textContent = '⬇ ' + filename.split('-').pop().replace('.mp3','').replace('.mp4','');}
+  }
+}
+
+function toggleSelectItem(cat, poemName, checked){
+  const key = cat + '::' + poemName;
+  if (!window.__selectedItems) window.__selectedItems = {};
+  if (checked) {
+    window.__selectedItems[key] = {cat, poemName};
+  } else {
+    delete window.__selectedItems[key];
+  }
+  updateSelectBar();
+}
+
+function toggleSelectAll(checked){
+  const poems = getCatalogPoems(lastCatalog.cat);
+  const q = lastCatalog.query.toLowerCase();
+  const filtered = q ? poems.filter(p => p.poem.toLowerCase().includes(q)) : poems;
+  const start = lastCatalog.page * lastCatalog.pageSize;
+  const pageItems = filtered.slice(start, start + lastCatalog.pageSize);
+  
+  if (!window.__selectedItems) window.__selectedItems = {};
+  
+  // 检查权限：普通用户只能选择有权限的分类
+  const canSelect = lastCatalog.cat === '__all__' ? true : (typeof hasPermission === 'function' ? hasPermission(lastCatalog.cat) : true);
+  
+  pageItems.forEach(p => {
+    const key = p.cat + '::' + p.poem;
+    if (checked) {
+      if (canSelect || (typeof hasPermission === 'function' && hasPermission(p.cat))) {
+        window.__selectedItems[key] = {cat: p.cat, poemName: p.poem};
+      }
+    } else {
+      delete window.__selectedItems[key];
+    }
+  });
+  renderCatalogList();
+}
+
+function updateSelectBar(){
+  const bar = document.getElementById('selectBar');
+  if (!bar) return;
+  if (lastCatalog.cat === '__all__' || lastCatalog.cat === '') {
+    bar.style.display = 'none';
+    return;
+  }
+  const canSelect = typeof hasPermission === 'function' ? hasPermission(lastCatalog.cat) : true;
+  if (!canSelect) {
+    bar.style.display = 'none';
+    return;
+  }
+  bar.style.display = 'flex';
+  const count = Object.keys(window.__selectedItems || {}).length;
+  document.getElementById('selectedInfo').textContent = `已选 ${count} 首`;
+}
+
+function clearSelection(){
+  window.__selectedItems = {};
+  renderCatalogList();
+}
+
+function batchDownload(){
+  const selected = Object.values(window.__selectedItems || {});
+  if (selected.length === 0) {
+    alert('请先选择要下载的诗词');
+    return;
+  }
+  
+  // 权限检查：过滤掉无权限的
+  const authorized = selected.filter(s => typeof hasPermission !== 'function' || hasPermission(s.cat));
+  const blocked = selected.length - authorized.length;
+  
+  if (authorized.length === 0) {
+    alert('您没有权限下载所选内容，请先解锁对应分类');
+    return;
+  }
+  
+  if (blocked > 0) {
+    if (!confirm(`您选择了 ${selected.length} 首诗，其中 ${blocked} 首无权限访问。
+是否仅下载有权限的 ${authorized.length} 首？`)) {
+      return;
+    }
+  }
+  
+  showDownloadModal(authorized);
+}
+
+function downloadSingle(cat, poemName, format){
+  // 权限检查
+  if (typeof hasPermission === 'function' && !hasPermission(cat)) {
+    alert('您没有权限下载此内容，请先解锁对应分类');
+    return;
+  }
+  showDownloadModal([{cat, poemName}], format);
+}
+
+function showDownloadModal(items, defaultFormat){
+  const format = defaultFormat || 'txt';
+  const isMulti = items.length > 1;
+  
+  // 生成下载内容预览
+  const contents = items.map(item => {
+    const poem = (poemData[item.cat] || []).find(p => p.poem === item.poemName);
+    if (!poem) return null;
+    
+    let text = '';
+    text += `《${poem.poem}》
+`;
+    if (poem.dynasty || poem.author) {
+      text += `${poem.dynasty || ''}${poem.author ? '·' + poem.author : ''}
+`;
+    }
+    if (poem.content) {
+      text += '\n' + poem.content + '\n';
+    }
+    return {name: poem.poem, content: text, poem: poem};
+  }).filter(Boolean);
+  
+  if (contents.length === 0) {
+    alert('没有可下载的内容');
+    return;
+  }
+  
+  // 创建弹窗
+  const overlay = document.createElement('div');
+  overlay.className = 'dl-modal-overlay';
+  overlay.innerHTML = `
+    <div class="dl-modal" onclick="event.stopPropagation()">
+      <h3>${isMulti ? `批量下载（${contents.length}首）` : '下载此诗'}</h3>
+      <div class="dl-options">
+        <label>下载格式：
+          <select id="dlFormat" style="padding:4px 8px;border-radius:4px;border:1px solid var(--border);background:var(--card);color:var(--ink);font-family:inherit;">
+            <option value="txt" ${format==='txt'?'selected':''}>TXT 纯文本</option>
+            <option value="md" ${format==='md'?'selected':''}>Markdown</option>
+            <option value="json" ${format==='json'?'selected':''}>JSON 数据</option>
+          </select>
+        </label>
+      </div>
+      <div style="font-size:13px;color:var(--ink-light);margin-bottom:8px;">下载预览：</div>
+      <textarea id="dlPreview" readonly></textarea>
+      <div class="dl-actions">
+        <button class="dl-btn" onclick="this.closest('.dl-modal-overlay').remove()">取消</button>
+        <button class="dl-btn primary" id="confirmDownload">⬇ 确认下载</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  
+  // 更新预览
+  function updatePreview(){
+    const fmt = document.getElementById('dlFormat').value;
+    let preview = '';
+    for (const c of contents) {
+      if (fmt === 'json') {
+        const data = {
+          poem: c.poem.poem,
+          author: c.poem.author || '',
+          dynasty: c.poem.dynasty || '',
+          content: c.poem.content || ''
+        };
+        preview += JSON.stringify(data, null, 2) + ',\n';
+      } else if (fmt === 'md') {
+        preview += `# ${c.poem.poem}\n`;
+        if (c.poem.dynasty || c.poem.author) {
+          preview += `> ${c.poem.dynasty || ''}${c.poem.author ? '·' + c.poem.author : ''}\n\n`;
+        }
+        if (c.poem.content) {
+          preview += c.poem.content.replace(/\n/g, '  \n') + '\n';
+        }
+        preview += '---\n\n';
+      } else {
+        preview += c.content + '\n';
+      }
+    }
+    if (fmt === 'json') preview = '[' + preview.slice(0, -2) + ']';
+    document.getElementById('dlPreview').value = preview;
+  }
+  
+  updatePreview();
+  document.getElementById('dlFormat').addEventListener('change', updatePreview);
+  
+  document.getElementById('confirmDownload').onclick = function(){
+    const fmt = document.getElementById('dlFormat').value;
+    const text = document.getElementById('dlPreview').value;
+    const firstPoem = contents[0].poem;
+    
+    let mime = 'text/plain;charset=utf-8';
+    let ext = '.txt';
+    if (fmt === 'json') { mime = 'application/json;charset=utf-8'; ext = '.json'; }
+    else if (fmt === 'md') { mime = 'text/markdown;charset=utf-8'; ext = '.md'; }
+    
+    const blob = new Blob([text], {type: mime});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = isMulti ? `古诗文合集_${contents.length}首${ext}` : `${firstPoem.poem}${ext}`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    overlay.remove();
+  };
+  
+  overlay.onclick = function() { overlay.remove(); };
+}
+
+function toggleVideo(header){
+  const collapse = header.closest('.video-collapse');
+  collapse.classList.toggle('open');
+  const body = collapse.querySelector('.video-body');
+  const isOpen = collapse.classList.contains('open');
+  body.style.maxHeight = isOpen ? '500px' : '0';
+  const arrow = header.querySelector('.vh-arrow');
+  if (arrow) arrow.textContent = isOpen ? '▼' : '▶';
+}
+
+/* ===== 全屏切换（原生 Fullscreen API，支持移动端横屏） ===== */
+function toggleFullscreen(btn){
+  const wrapper = btn.closest('.video-wrapper');
+  const video = wrapper.querySelector('.video-player');
+  const isFull = !!(document.fullscreenElement || document.webkitFullscreenElement);
+  if (isFull) {
+    if (document.exitFullscreen) document.exitFullscreen();
+    else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+    else if (document.webkitCancelFullScreen) document.webkitCancelFullScreen();
+  } else {
+    // iOS Safari 必须对 video 元素调用 webkitEnterFullscreen
+    if (video && video.webkitEnterFullscreen) {
+      video.webkitEnterFullscreen();
+    } else if (video && video.webkitSupportsFullscreen) {
+      video.webkitEnterFullscreen();
+    } else {
+      const el = wrapper;
+      if (el.requestFullscreen) el.requestFullscreen().catch(()=>{});
+      else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+      else if (el.webkitRequestFullScreen) el.webkitRequestFullScreen();
+    }
+    // 尝试锁定横屏方向（Android Chrome 支持）
+    if (screen.orientation && screen.orientation.lock) {
+      screen.orientation.lock('landscape').catch(()=>{});
+    }
+    if (video && video.paused) video.play();
+  }
+}
+
+/* 监听全屏变化，更新按钮状态 */
+function onFullscreenChange(){
+  const isFull = !!(document.fullscreenElement || document.webkitFullscreenElement);
+  document.querySelectorAll('.video-wrapper').forEach(w => {
+    const btn = w.querySelector('.fs-btn');
+    const video = w.querySelector('.video-player');
+    if (!btn) return;
+    const videoFull = video && video.webkitDisplayingFullscreen;
+    if (isFull || videoFull) {
+      btn.textContent = '✕';btn.classList.add('exit');btn.title = '退出全屏';
+    } else {
+      btn.textContent = '⛶';btn.classList.remove('exit');btn.title = '全屏';
+    }
+  });
+}
+document.addEventListener('fullscreenchange', onFullscreenChange);
+document.addEventListener('webkitfullscreenchange', onFullscreenChange);
+document.addEventListener('webkitbeganfullscreen', onFullscreenChange);
+document.addEventListener('webkitendfullscreen', onFullscreenChange);
+
+/* ESC键退出全屏 */
+document.addEventListener('keydown', function(e){
+  if (e.key === 'Escape') {
+    if (document.exitFullscreen) document.exitFullscreen();
+    else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+    else if (document.webkitCancelFullScreen) document.webkitCancelFullScreen();
+  }
+});
+
+/* ===== 横屏切换（直接全屏 + 锁定横屏） ===== */
+function toggleLandscape(btn){
+  // 横屏按钮 = 进入全屏并锁定横屏方向
+  toggleFullscreen(btn);
+  const wrapper = btn.closest('.video-wrapper');
+  const video = wrapper.querySelector('.video-player');
+  if (screen.orientation && screen.orientation.lock) {
+    screen.orientation.lock('landscape').catch(()=>{});
+  }
+  // iOS: 通过 webkitEnterFullscreen 进入原生全屏（自动横屏）
+  if (video && video.webkitEnterFullscreen) {
+    video.webkitEnterFullscreen();
+  }
+  if (video && video.paused) video.play();
+}
+
+/* ===== 返回首页 ===== */
+function goHome(){
+  // 音频继续后台播放，只暂停视频
+  document.querySelectorAll('.video-player').forEach(v => v.pause());
+  showView('view-home');
+}
+
+/* ===== 返回目录 ===== */
+function backToCatalog(){
+  // 音频继续后台播放，只暂停视频
+  document.querySelectorAll('.video-player').forEach(v => v.pause());
+  renderCatalogList();
+  showView('view-catalog');
+}
+
+/* ===== 邀请码系统 ===== */
+// 登录邀请码
+const LOGIN_CODES = {
+  'yu123': {role:'admin', name:'管理员'},
+  'admin': {role:'user',  name:'普通用户'}
+};
+// 每个分类对应的邀请码（普通用户输入解锁）
+const CATEGORY_CODES = {
+  '一年级': 'YG2024A',
+  '二年级': 'EG2024B',
+  '三年级': 'SG2024C',
+  '四年级': 'SG2024D',
+  '五年级': 'WG2024E',
+  '六年级': 'LG2024F',
+  '七年级': 'QG2024G',
+  '八年级': 'BG2024H',
+  '九年级': 'JG2024I',
+  '文言文选择性必修（10篇）': 'WX2024J',
+  '高中文言文必修（10篇）': 'GX2024K',
+  '高中文言文选修（12篇）': 'GX2024L',
+  '高中诗词曲（40首）': 'GS2024M'
+};
+
+let unlockedCats = [];
+let currentUser = null;
+const CACHE_VERSION = 'v3';
+
+// Safe storage wrapper — falls back to in-memory if localStorage is unavailable (e.g. file:// protocol)
+const _memStore = {};
+const safeStorage = {
+  getItem(k){ try { return localStorage.getItem(k); } catch(e) { return _memStore[k] || null; } },
+  setItem(k,v){ try { localStorage.setItem(k,v); } catch(e) { _memStore[k] = v; } },
+  removeItem(k){ try { localStorage.removeItem(k); } catch(e) { delete _memStore[k]; } }
+};
+
+function initUserSystem(){
+  const saved = safeStorage.getItem('yss_user_state');
+  if (saved) {
+    try {
+      const state = JSON.parse(saved);
+      if (state.version !== CACHE_VERSION) {
+        safeStorage.removeItem('yss_user_state');
+      } else {
+        currentUser = state.currentUser;
+        unlockedCats = state.unlockedCats || [];
+      }
+    } catch(e) { safeStorage.removeItem('yss_user_state'); }
+  }
+  if (currentUser) {
+    hideLoginView();
+    updateUserBar();
+    updateUnlockBar();
+    renderCatGrid();
+  } else {
+    showLoginView();
+  }
+}
+
+function saveState(){
+  safeStorage.setItem('yss_user_state', JSON.stringify({currentUser, unlockedCats, version: CACHE_VERSION}));
+}
+
+function showLoginView(){
+  document.getElementById('loginView').classList.remove('hidden');
+  const inp = document.getElementById('inviteCode');
+  if (inp) inp.value = '';
+  const err = document.getElementById('loginError');
+  if (err) err.textContent = '';
+}
+function hideLoginView(){
+  document.getElementById('loginView').classList.add('hidden');
+}
+
+// 首次登录
+function doLogin(){
+  const raw = document.getElementById('inviteCode').value;
+  const code = raw.replace(/\s/g, '').toLowerCase();
+  const errEl = document.getElementById('loginError');
+  if (!code) {
+    errEl.textContent = '请输入邀请码';
+    return;
+  }
+  // 检查登录码
+  let foundUser = null;
+  for (const [k, v] of Object.entries(LOGIN_CODES)) {
+    if (k.toLowerCase() === code) {foundUser = v; break;}
+  }
+  if (foundUser) {
+    currentUser = foundUser;
+    if (currentUser.role === 'admin') unlockedCats = Object.keys(CATEGORY_CODES);
+    saveState();
+    hideLoginView();
+    updateUserBar();
+    updateUnlockBar();
+    renderCatGrid();
+    return;
+  }
+  // 检查分类码（直接用分类码登录=解锁该分类）
+  const upperCode = raw.replace(/\s/g, '').toUpperCase();
+  let foundCat = null;
+  for (const [cat, c] of Object.entries(CATEGORY_CODES)) {
+    if (c.toUpperCase() === upperCode) {foundCat = cat; break;}
+  }
+  if (foundCat) {
+    currentUser = LOGIN_CODES['admin'];
+    if (!unlockedCats.includes(foundCat)) unlockedCats.push(foundCat);
+    saveState();
+    hideLoginView();
+    updateUserBar();
+    updateUnlockBar();
+    renderCatGrid();
+    return;
+  }
+  errEl.textContent = '邀请码无效';
+}
+
+// 首页解锁更多分类（普通用户）
+function doUnlock(){
+  const raw = document.getElementById('unlockInput').value;
+  const inp = document.getElementById('unlockInput');
+  if (!raw.trim()) return;
+  const upperCode = raw.replace(/\s/g, '').toUpperCase();
+  let foundCat = null;
+  for (const [cat, c] of Object.entries(CATEGORY_CODES)) {
+    if (c.toUpperCase() === upperCode) {foundCat = cat; break;}
+  }
+  if (foundCat) {
+    if (unlockedCats.includes(foundCat)) {
+      alert('该分类已解锁：' + foundCat);
+    } else {
+      unlockedCats.push(foundCat);
+      saveState();
+      renderCatGrid();
+      alert('已解锁：' + foundCat);
+    }
+    inp.value = '';
+    return;
+  }
+  alert('邀请码无效');
+  inp.value = '';
+}
+
+function doLogout(){
+  currentUser = null;
+  unlockedCats = [];
+  safeStorage.removeItem('yss_user_state');
+  showLoginView();
+}
+
+function updateUserBar(){
+  if (!currentUser) return;
+  const adminBadge = currentUser.role === 'admin' 
+    ? '<span class="user-role admin">管理员</span>' 
+    : '<span class="user-role">普通用户</span>';
+  const settingsBtn = currentUser.role === 'admin' 
+    ? '<button class="settings-btn" onclick="openSettings()">⚙</button>' 
+    : '';
+  const bar = `<span class="user-name">${currentUser.name}</span>${adminBadge}${settingsBtn}<button class="logout-btn" onclick="doLogout()">退出</button>`;
+  const homeBar = document.getElementById('homeUserBar');
+  if (homeBar) homeBar.innerHTML = bar;
+  const catBar = document.getElementById('catalogUserBar');
+  if (catBar) catBar.innerHTML = bar;
+}
+
+function updateUnlockBar(){
+  const bar = document.getElementById('unlockBar');
+  if (bar) bar.style.display = (currentUser && currentUser.role === 'user') ? 'flex' : 'none';
+}
+
+// 管理员设置弹窗
+function openSettings(){
+  const body = document.getElementById('settingsBody');
+  let html = '';
+  for (const [cat, code] of Object.entries(CATEGORY_CODES)) {
+    html += `<div class="code-row"><span class="code-cat">${cat}</span><span class="code-val">${code}</span></div>`;
+  }
+  html += '<div style="margin-top:12px;padding-top:8px;border-top:1px solid var(--border);font-size:12px;color:var(--ink-light);">管理员码：yu123 / 普通用户码：admin</div>';
+  body.innerHTML = html;
+  document.getElementById('settingsModal').classList.add('show');
+}
+function closeSettings(){
+  document.getElementById('settingsModal').classList.remove('show');
+}
+
+function hasPermission(cat){
+  if (!currentUser) return false;
+  if (currentUser.role === 'admin') return true;
+  return unlockedCats.includes(cat);
+}
+
+/* ===== 初始化 ===== */
+initUserSystem();
+renderCatGrid();
+</script>
+</body>
+</html>
