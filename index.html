@@ -1132,7 +1132,7 @@ async function downloadMediaFile(url, filename, btn){
     // 对移动端给出友好提示
     let msg = `无法直接下载，请尝试以下方式：\n\n1. 复制链接到浏览器地址栏打开\n2. 长按/右键选择“存储”或“下载”\n\n链接：${url}`;
     if (!isMobile) {
-      msg = `下载失败（可能跨域），请复制链接到新标签页打开或点击下载查看：\n${url}`;
+      msg = `下载失败（可能跨域），请复制链接到新标签页打开：\n${url}`;
     }
     alert(msg);
     // 依然提供打开链接的快捷方式（移动端可长按保存）
